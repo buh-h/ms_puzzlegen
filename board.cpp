@@ -1,7 +1,4 @@
 #include "board.hpp"
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
 
 const int Board::UNCLEARED_VALUE = -1;
 const int Board::CLEARED_VALUE = 0;
@@ -59,7 +56,7 @@ void Board::chord(int y_coord, int x_coord) {
         for (int j=x_coord-1; j<= x_coord+1; j++) {
             if (j < 0) j++;
             if (j >= X_DIMENSION) break;
-            if (!(i == y_coord && j == x_coord)) click(i, j);
+            if (!(i == y_coord && j == x_coord) && (visibleBoard[i][j] != FLAG_VALUE)) click(i, j);
         }
     }
 }
@@ -82,7 +79,7 @@ int Board::countMines(int y_coord, int x_coord, std::vector<std::vector<int>> bo
         for (int j=x_coord-1; j<= x_coord+1; j++) {
             if (j < 0) j++;
             if (j >= X_DIMENSION) break;
-            if ( !(i == y_coord && j == x_coord) && board[i][j] == MINE_VALUE) 
+            if (!(i == y_coord && j == x_coord) && board[i][j] == MINE_VALUE) 
                 numMines++;
         }
     }

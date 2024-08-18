@@ -1,5 +1,8 @@
 #pragma once
 #include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <iostream>
 
 class Board {
 

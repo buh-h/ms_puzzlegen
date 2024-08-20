@@ -16,8 +16,6 @@ class Board {
 
     std::vector<std::vector<int>> visibleBoard;
     std::vector<std::vector<int>> fullBoard;
-    // int visibleBoard[Y_DIMENSION][X_DIMENSION];
-    // int fullBoard[Y_DIMENSION][X_DIMENSION];
 
     int minesLeft;
     int totalMines;
@@ -27,11 +25,13 @@ class Board {
     void click(int y_coord, int x_coord);
     void chord(int y_coord, int x_coord);
     void flag(int y_coord, int x_coord);
-    int countMines(int y_coord, int x_coord, std::vector<std::vector<int>> board);
-    //int countMines(int y_coord, int x_coord, int board[Y_DIMENSION][X_DIMENSION]);
+    void flagSurrounding(int y_coord, int x_coord);
+    int countMines(int y_coord, int x_coord);
+    int countUncleared(int y_coord, int x_coord);
 
     private: 
-    //std::vector<std::vector<int>> fullBoard;
     bool isOnBoard(int y_coord, int x_coord);
+    int countMinesOnFull(int y_coord, int x_coord);
     void clearAdjacent(int y_coord, int x_coord);
+
 };

@@ -16,7 +16,6 @@ class Solver {
     Solver(Board b);
 
     void clearTrivial();
-    void guessRandomly();
     void guaranteedClick();
     Solution testCases();
     Solution testCasesWithCount();

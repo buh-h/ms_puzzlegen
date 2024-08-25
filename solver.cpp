@@ -26,18 +26,17 @@ void Solver::clearTrivial() {
 
 void Solver::guaranteedClick() {
     srand(time(NULL));
-    int randX = rand() % board.X_DIMENSION;
-    int randY = rand() % board.Y_DIMENSION;
-    while (board.fullBoard[randY][randX] == board.MINE_VALUE 
-                || board.visibleBoard[randY][randX] != board.UNCLEARED_VALUE) {
+    int randX, randY;
+    do {
         randX = rand() % board.X_DIMENSION;
         randY = rand() % board.Y_DIMENSION;
-    }
+    } while (board.fullBoard[randY][randX] == board.MINE_VALUE 
+                || board.visibleBoard[randY][randX] != board.UNCLEARED_VALUE);
     board.click(randY, randX);
 }
 
 Solver::Solution Solver::testAllCases() {
-
+    
 }
 
 Solver::Solution Solver::testCasesForTile(int y_coord, int x_coord) {
@@ -86,15 +85,28 @@ std::vector<Solver::Point> Solver::getSurroundingUncleared(int y_coord, int x_co
 std::vector<std::vector<bool>> Solver::generateCombinations(int numMines, int numUncleared) {
     std::vector<std::vector<bool>> allCombinations;
     std::vector<bool> combination(numUncleared, false);
+
     if (numMines >= numUncleared) {
         std::fill(combination.begin(), combination.end(), true);
     } else {
         std::fill(combination.begin(), combination.begin() + numMines, true);
     }
+
+    do {
+        allCombinations.push_back(combination);
+    } while (std::next_permutation(combination.begin(), combination.end()));
     
     return allCombinations;
 }
 
 std::vector<std::vector<bool>> Solver::generateAllCombinations(int totalMines, int numUncleared) {
+    std::vector<std::vector<bool>> allCombinations;
+    int numMines = totalMines > numUncleared ? numUncleared : totalMines;
 
+    while (numMines-- > 0) {
+        std::vector<std::vector<bool>> combinations = generateCombinations(numMines, numUncleared);
+        allCombinations.insert(allCombinations.end(), combinations.begin(), combinations.end());
+    }
+
+    return allCombinations;
 }

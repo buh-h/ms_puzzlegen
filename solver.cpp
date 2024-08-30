@@ -5,6 +5,7 @@ Solver::Point::Point() : y(0), x(0) {};
 Solver::Point::Point(int y, int x) : y(y), x(x) {};
 
 bool Solver::Point::operator==(const Point &other) const {
+    // Hash for 8x8 board
     return x == other.x && y == other.y;
 }
 
@@ -17,21 +18,34 @@ void Solver::clearTrivial() {
     bool changeMade = true;
     while (changeMade) {
         changeMade = false;
-
-        for (int i=0; i<board.Y_DIMENSION; i++) {
-            for (int j=0; j<board.X_DIMENSION; j++) {
-                if (board.visibleBoard[i][j] <= 0 || board.countUncleared(i, j) == 0) 
-                    continue;
-                if (board.visibleBoard[i][j] == board.countMines(i, j) + board.countUncleared(i, j)) {
-                    board.flagSurrounding(i, j);
-                    changeMade = true;
-                }
-                if (board.visibleBoard[i][j] == board.countMines(i, j)) {
-                    board.chord(i, j);
-                    changeMade = true;
-                }
-            }    
+        std::vector<Point> borderNumbers = getAllBorderNumbers();
+        // Only iterates through tiles of interest
+        for (Point point : borderNumbers) {
+            if (board.visibleBoard[point.y][point.x] <= 0 || board.countUncleared(point.y, point.x) == 0) 
+                continue;
+            if (board.visibleBoard[point.y][point.x] == board.countMines(point.y, point.x) + board.countUncleared(point.y, point.x)) {
+                board.flagSurrounding(point.y, point.x);
+                changeMade = true;
+            } else if (board.visibleBoard[point.y][point.x] == board.countMines(point.y, point.y)) {
+                board.chord(point.y, point.x);
+                changeMade = true;
+            }
         }
+        // Iterates through all tiles
+        // for (int i=0; i<board.Y_DIMENSION; i++) {
+        //     for (int j=0; j<board.X_DIMENSION; j++) {
+        //         if (board.visibleBoard[i][j] <= 0 || board.countUncleared(i, j) == 0) 
+        //             continue;
+        //         if (board.visibleBoard[i][j] == board.countMines(i, j) + board.countUncleared(i, j)) {
+        //             board.flagSurrounding(i, j);
+        //             changeMade = true;
+        //         }
+        //         if (board.visibleBoard[i][j] == board.countMines(i, j)) {
+        //             board.chord(i, j);
+        //             changeMade = true;
+        //         }
+        //     }    
+        // }
     }
 }
 
@@ -111,6 +125,15 @@ Solver::Solution Solver::testAllCases() {
         }
     }
     return solution;
+}
+
+void Solver::makeMove(Solution moves) {
+    for (Point point : moves.clear) {
+        board.click(point.y, point.x);
+    }
+    for (Point point : moves.mines) {
+        board.flag(point.y, point.x);
+    }
 }
 
 bool Solver::isBorderUncleared(int y_coord, int x_coord) {

@@ -20,6 +20,7 @@ class Solver {
     };
 
     Solver(Board b);
+    Board board;
 
     void clearTrivial();
     void guaranteedClick();
@@ -28,7 +29,6 @@ class Solver {
     void makeMove(Solution moves);
 
     private:
-    Board board;
     bool isBorderUncleared(int y_coord, int x_coord);
     bool isBorderNumber(int y_coord, int x_coord);
     std::vector<Point> getAllBorderingUncleared();

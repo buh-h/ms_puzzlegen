@@ -10,6 +10,8 @@ const int Board::Y_DIMENSION = 8;
 Board::Board(int mineCount) {
     gameOver = false;
     minesLeft = mineCount;
+    totalMines = mineCount;
+    numCleared = 0;
     fullBoard = std::vector<std::vector<int>>(Y_DIMENSION, std::vector<int>(X_DIMENSION, UNCLEARED_VALUE));
     visibleBoard = std::vector<std::vector<int>>(Y_DIMENSION, std::vector<int>(X_DIMENSION, UNCLEARED_VALUE));
 
@@ -32,20 +34,27 @@ Board::Board(int mineCount) {
 }
 
 void Board::click(int y_coord, int x_coord) {
-    bool isValidClick = visibleBoard[y_coord][x_coord] != UNCLEARED_VALUE;
-    if (gameOver || !isOnBoard || !isValidClick) 
+    bool isValidClick = visibleBoard[y_coord][x_coord] == UNCLEARED_VALUE;
+    if (gameOver || !isOnBoard(y_coord, x_coord) || !isValidClick) 
         return;
 
     if (fullBoard[y_coord][x_coord] == MINE_VALUE) {
         gameOver = true;
+        std::cout << "Clicked on mine at X: " << x_coord << " Y: " << y_coord << std::endl;
         return;
     }
     clearAdjacent(y_coord, x_coord);
+
+    // Checks if game was won by comparing the visible and full board
+    if (numCleared == X_DIMENSION * Y_DIMENSION - totalMines) {
+        gameOver = true;
+        std::cout << "You won" << std::endl;
+    }
 }
 
 void Board::chord(int y_coord, int x_coord) {
     bool isValidChord = visibleBoard[y_coord][x_coord] > 0 
-                            && countMines(y_coord, x_coord) != visibleBoard[y_coord][x_coord];
+                            && countMines(y_coord, x_coord) == visibleBoard[y_coord][x_coord];
     if (gameOver || !isOnBoard(y_coord, x_coord) || !isValidChord)
         return;
 
@@ -61,16 +70,16 @@ void Board::chord(int y_coord, int x_coord) {
 }
 
 void Board::flag(int y_coord, int x_coord) {
-    bool isValidFlag = visibleBoard[y_coord][x_coord] != UNCLEARED_VALUE;
+    bool isValidFlag = visibleBoard[y_coord][x_coord] == UNCLEARED_VALUE;
     if (gameOver || !isOnBoard(y_coord, x_coord) || !isValidFlag)
         return;
 
-    visibleBoard[y_coord][x_coord] = MINE_VALUE;
+    visibleBoard[y_coord][x_coord] = FLAG_VALUE;
+    minesLeft--;
 }
 
 void Board::flagSurrounding(int y_coord, int x_coord) {
-    bool isValidMove = visibleBoard[y_coord][x_coord] > 0 
-                            && countMines(y_coord, x_coord) == visibleBoard[y_coord][x_coord];
+    bool isValidMove = visibleBoard[y_coord][x_coord] > 0;
     if (gameOver || !isOnBoard(y_coord, x_coord) || !isValidMove)
         return;
     
@@ -94,7 +103,7 @@ int Board::countMines(int y_coord, int x_coord) {
         for (int j=x_coord-1; j<= x_coord+1; j++) {
             if (j < 0) j++;
             if (j >= X_DIMENSION) break;
-            if (!(i == y_coord && j == x_coord) && visibleBoard[i][j] == MINE_VALUE) 
+            if (!(i == y_coord && j == x_coord) && visibleBoard[i][j] == FLAG_VALUE) 
                 mineCount++;
         }
     }
@@ -144,6 +153,7 @@ void Board::clearAdjacent(int y_coord, int x_coord) {
         return;
 
     visibleBoard[y_coord][x_coord] = fullBoard[y_coord][x_coord];
+    numCleared++;
     
     if (fullBoard[y_coord][x_coord] != CLEARED_VALUE) 
         return;

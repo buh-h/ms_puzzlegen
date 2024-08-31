@@ -12,9 +12,10 @@ bool Solver::Point::operator==(const Point &other) const {
 std::size_t Solver::PointHash::operator()(const Solver::Point &p) const {
     return p.x * 8 + p.y;
 }
-Solver::Solver(Board b) : board(std::move(b)) {};
+Solver::Solver(Board b) : board(std::move(b)) {srand(time(NULL));};
 
 void Solver::clearTrivial() {
+    if (board.gameOver) return;
     bool changeMade = true;
     while (changeMade) {
         changeMade = false;
@@ -26,11 +27,14 @@ void Solver::clearTrivial() {
             if (board.visibleBoard[point.y][point.x] == board.countMines(point.y, point.x) + board.countUncleared(point.y, point.x)) {
                 board.flagSurrounding(point.y, point.x);
                 changeMade = true;
-            } else if (board.visibleBoard[point.y][point.x] == board.countMines(point.y, point.y)) {
+                //std::cout << "Stuck on case 1" << std::endl;
+            } else if (board.visibleBoard[point.y][point.x] == board.countMines(point.y, point.x)) {
                 board.chord(point.y, point.x);
                 changeMade = true;
+                //std::cout << "Stuck on case 2 at " << point.y << " " << point.x << std::endl;
             }
         }
+
         // Iterates through all tiles
         // for (int i=0; i<board.Y_DIMENSION; i++) {
         //     for (int j=0; j<board.X_DIMENSION; j++) {
@@ -50,7 +54,7 @@ void Solver::clearTrivial() {
 }
 
 void Solver::guaranteedClick() {
-    srand(time(NULL));
+    if (board.gameOver) return;
     std::vector<Point> borderingUncleared = getAllBorderingUncleared();
     int randX, randY;
     if (borderingUncleared.size() == 0) {
@@ -70,12 +74,15 @@ void Solver::guaranteedClick() {
         } while (board.fullBoard[randY][randX] == Board::MINE_VALUE 
                     || board.visibleBoard[randY][randX] != Board::UNCLEARED_VALUE);
     }
+    std::cout << "Making guess at Y: " << randY << " X: " << randX << std::endl;
     board.click(randY, randX);
 }
 
 Solver::Solution Solver::testAllCases() {
+    Solution solution;
     std::unordered_map<Point, int, PointHash> clear;
     std::unordered_map<Point, int, PointHash> mines;
+    if (board.gameOver) return solution;
 
     std::vector<Point> borderingUncleared = getAllBorderingUncleared();
     std::vector<Point> borderNumbers = getAllBorderNumbers();
@@ -89,7 +96,7 @@ Solver::Solution Solver::testAllCases() {
         for (int i=0; i<combination.size(); i++) {
             int currentY = borderingUncleared[i].y;
             int currentX = borderingUncleared[i].x;
-            testBoard[currentY][currentX] = combination[i] == 1 ? Board::MINE_VALUE : Board::CLEARED_VALUE;
+            testBoard[currentY][currentX] = combination[i] == 1 ? Board::FLAG_VALUE : Board::CLEARED_VALUE;
         }
         // Testing whether the combination is valid
         for (Point p : borderNumbers) {
@@ -113,7 +120,6 @@ Solver::Solution Solver::testAllCases() {
         }
     }
     
-    Solution solution;
     for (const auto & [point, count] : clear) {
         if (count == numValidCombinations) {
             solution.clear.push_back(point);

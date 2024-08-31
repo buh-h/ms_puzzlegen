@@ -18,6 +18,7 @@ class Board {
     std::vector<std::vector<int>> fullBoard;
 
     int minesLeft;
+    int numCleared;
     int totalMines;
     bool gameOver;
 

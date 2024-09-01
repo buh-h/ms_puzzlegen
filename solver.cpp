@@ -15,9 +15,9 @@ std::size_t Solver::PointHash::operator()(const Solver::Point &p) const {
 Solver::Solver(Board b) : board(std::move(b)) {srand(time(NULL));};
 
 void Solver::clearTrivial() {
-    if (board.gameOver) return;
     bool changeMade = true;
     while (changeMade) {
+        if (board.gameOver) return;
         changeMade = false;
         std::vector<Point> borderNumbers = getAllBorderNumbers();
         // Only iterates through tiles of interest
@@ -74,7 +74,7 @@ void Solver::guaranteedClick() {
         } while (board.fullBoard[randY][randX] == Board::MINE_VALUE 
                     || board.visibleBoard[randY][randX] != Board::UNCLEARED_VALUE);
     }
-    std::cout << "Making guess at Y: " << randY << " X: " << randX << std::endl;
+    //std::cout << "Making guess at Y: " << randY << " X: " << randX << std::endl;
     board.click(randY, randX);
 }
 
@@ -86,7 +86,12 @@ Solver::Solution Solver::testAllCases() {
 
     std::vector<Point> borderingUncleared = getAllBorderingUncleared();
     std::vector<Point> borderNumbers = getAllBorderNumbers();
-    std::vector<std::vector<int>> allCombinations = generateAllCombinations(board.minesLeft, borderingUncleared.size());
+    std::vector<std::vector<int>> allCombinations; 
+    // Reduces possible combinations when nearing the end of the game
+    if (borderingUncleared.size() == Board::Y_DIMENSION * Board::X_DIMENSION - board.numCleared)
+        allCombinations = generateCombinations(board.minesLeft, borderingUncleared.size());
+    else 
+        allCombinations = generateAllCombinations(board.minesLeft, borderingUncleared.size());
     int numValidCombinations = allCombinations.size();
     std::vector<std::vector<int>> testBoard = board.visibleBoard;
 

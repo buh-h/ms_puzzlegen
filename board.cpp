@@ -48,7 +48,7 @@ void Board::click(int y_coord, int x_coord) {
     // Checks if game was won by comparing the visible and full board
     if (numCleared == X_DIMENSION * Y_DIMENSION - totalMines) {
         gameOver = true;
-        std::cout << "You won" << std::endl;
+        //std::cout << "You won" << std::endl;
     }
 }
 

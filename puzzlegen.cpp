@@ -2,7 +2,7 @@
 #include <fstream>
 
 int main() {
-
+    srand(NULL);
 
     return 0;
 }

@@ -15,7 +15,6 @@ Board::Board(int mineCount) {
     fullBoard = std::vector<std::vector<int>>(Y_DIMENSION, std::vector<int>(X_DIMENSION, UNCLEARED_VALUE));
     visibleBoard = std::vector<std::vector<int>>(Y_DIMENSION, std::vector<int>(X_DIMENSION, UNCLEARED_VALUE));
 
-    srand(time(NULL));
     while (mineCount > 0) {
         int mineXCoord = rand() % X_DIMENSION;
         int mineYCoord = rand() % Y_DIMENSION;

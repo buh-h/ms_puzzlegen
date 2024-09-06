@@ -78,7 +78,7 @@ void Solver::guaranteedClick() {
     board.click(randY, randX);
 }
 
-Solver::Solution Solver::testAllCases() {
+Solver::Solution Solver::testMinecountCases() {
     Solution solution;
     if (board.gameOver) return solution;
     std::unordered_map<Point, int, PointHash> clear;
@@ -142,13 +142,14 @@ Solver::Solution Solver::testAllCases() {
     }
     return solution;
 }
+
 Solver::Solution Solver::testCasesByTile() {
     Solution solution;
     if (board.gameOver) return solution;
 
     std::vector<Point> borderNumbers = getAllBorderNumbers();
     Board testBoard = board;
-    std::unordered_set<Point, PointHash> testedTiles;
+    //std::unordered_set<Point, PointHash> testedTiles;
 
     for (Point currentNumber : borderNumbers) {
         int y = currentNumber.y; 
@@ -157,14 +158,14 @@ Solver::Solution Solver::testCasesByTile() {
         std::unordered_map<Point, int, PointHash> clear, mines;
 
         // Checks if the surrounding tiles have already been tested
-        bool allContained = true;
-        for (Point point : surroundingUncleared) {
-            if (testedTiles.find(point) == testedTiles.end()) {
-                allContained = false;
-                break;
-            }
-        }
-        if (allContained) continue;
+        // bool allContained = true;
+        // for (Point point : surroundingUncleared) {
+        //     if (testedTiles.find(point) == testedTiles.end()) {
+        //         allContained = false;
+        //         break;
+        //     }
+        // }
+        // if (allContained) continue;
 
         int minesLeft = testBoard.visibleBoard[y][x] - board.countMines(y, x);
         std::vector<std::vector<int>> combinations = generateCombinations(minesLeft, surroundingUncleared.size());
@@ -189,21 +190,24 @@ Solver::Solution Solver::testCasesByTile() {
             }
         }
 
-        testedTiles.insert(surroundingUncleared.begin(), surroundingUncleared.end());
+        //testedTiles.insert(surroundingUncleared.begin(), surroundingUncleared.end());
 
         for (const auto & [point, count] : clear) {
-            if (count == numValidArrangements) {
+            if (count == numValidArrangements 
+                        && std::find(solution.clear.begin(), solution.clear.end(), point) == solution.clear.end()) {
                 solution.clear.push_back(point);
             }
         }
         for (const auto & [point, count] : mines) {
-            if (count == numValidArrangements) {
+            if (count == numValidArrangements
+                        && std::find(solution.mines.begin(), solution.mines.end(), point) == solution.mines.end()) {
                solution.mines.push_back(point);
             }
         }   
     }
     return solution;
 }
+
 void Solver::makeMove(Solution moves) {
     for (Point point : moves.clear) {
         board.click(point.y, point.x);

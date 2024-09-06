@@ -25,7 +25,7 @@ class Solver {
 
     void clearTrivial();
     void guaranteedClick();
-    Solution testAllCases();
+    Solution testMinecountCases();
     Solution testCasesByTile();
     void makeMove(Solution moves);
     void printBoard();

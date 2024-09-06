@@ -10,9 +10,9 @@ int main() {
     if (!out) {
         return 1;
     }
-
+    int num = 0;
     for (int n=10; n<25; n++){
-        int x = 100;
+        int x = 25;
 
         while (x--) {
             Board b(n);
@@ -30,7 +30,7 @@ int main() {
                     std::string minePointsString = "";
                     for (std::vector<int> row : s.board.visibleBoard) {
                         for (int i : row) {
-                            boardString += std::to_string(i);
+                            boardString += std::to_string(i) + " ";
                         }
                     }
                     for (Solver::Point clearPoint : solve.clear) {
@@ -43,9 +43,11 @@ int main() {
                     }
                     out << boardString << "\n" << clearPointsString << "\n" << minePointsString << "\n";
                     s.makeMove(solve);
+                    num++;
                 }
             }
         }
     }
+    std::cout << num;
     out.close();
 }

@@ -89,10 +89,14 @@ Solver::Solution Solver::testMinecountCases() {
     std::vector<std::vector<int>> allCombinations; 
     // Reduces possible combinations when nearing the end of the game
     std::cout << "generating combinations\n";
-    if (borderingUncleared.size() == Board::Y_DIMENSION * Board::X_DIMENSION - board.numCleared)
-        allCombinations = generateCombinations(board.minesLeft, borderingUncleared.size());
-    else 
-        allCombinations = generateAllCombinations(board.minesLeft, borderingUncleared.size());
+    // if (borderingUncleared.size() == Board::Y_DIMENSION * Board::X_DIMENSION - board.numCleared)
+    //     allCombinations = generateCombinations(board.minesLeft, borderingUncleared.size());
+    // else 
+    int maxMines = 0;
+    for (Point p: borderNumbers) {
+        maxMines += board.visibleBoard[p.y][p.x];
+    }
+    allCombinations = generateAllCombinations(maxMines, borderingUncleared.size());
     int numValidCombinations = allCombinations.size();
     std::vector<std::vector<int>> testBoard = board.visibleBoard;
     for (std::vector<int> combination : allCombinations)
@@ -146,7 +150,7 @@ Solver::Solution Solver::testMinecountCases() {
 Solver::Solution Solver::testCasesByTile() {
     Solution solution;
     if (board.gameOver) return solution;
-
+    
     std::vector<Point> borderNumbers = getAllBorderNumbers();
     Board testBoard = board;
     //std::unordered_set<Point, PointHash> testedTiles;
@@ -205,6 +209,96 @@ Solver::Solution Solver::testCasesByTile() {
             }
         }   
     }
+    return solution;
+}
+
+Solver::Solution Solver::test2x2Tiles() {
+    Solution solution;
+    if (board.gameOver) return solution;
+    std::vector<std::vector<int>> originalBoard = board.visibleBoard;
+    std::vector<std::vector<int>> updatedBoard = board.visibleBoard;
+    bool changeMade = true;
+    while (changeMade) {
+        changeMade = false;
+        for (int i=0; i<Board::Y_DIMENSION; i++) {
+            for (int j=0; j<Board::X_DIMENSION; j++) {
+
+                std::vector<Point> nums2x2;
+                get2x2BorderNumbers(i, j, nums2x2);
+
+                // Skips tile if there are no border numbers around it
+                if (nums2x2.size() == 0) continue;
+
+                //std::cout << "Looking at y: " << i << " x: " << j << "\n"; 
+                std::unordered_map<Point, int, PointHash> clear, mines;
+                std::vector<std::vector<Point>> cases;
+                findCasesDFS(nums2x2, 0, std::vector<Point>(), cases, board);
+                int numValidArrangements = cases.size();
+                //FOR DEBUGGING
+                int n = 0;
+                for (std::vector<Point>& mineArrangement: cases) {
+                    n++;
+                    std::vector<Point> borderingUncleared;
+                    getBorderingUnclearedForList(nums2x2, borderingUncleared);
+                    // Inputs the mine arrangement
+                    for (Point& p: mineArrangement) {
+                        board.visibleBoard[p.y][p.x] = Board::FLAG_VALUE;
+                    }
+                    for (Point& p: borderingUncleared) {
+                        if (board.visibleBoard[p.y][p.x] != Board::FLAG_VALUE) {
+                            board.visibleBoard[p.y][p.x] = Board::CLEARED_VALUE;
+                        }
+                        
+                    }
+
+                    // std::cout << "After mine Arrangement\n";
+                    // printBoard();
+                    // std::cout << "\n";
+
+                    if (testCombination(board, clear, mines)) {
+                        // If the case is valid, add the initial tiles to clear and mines
+                        for (Point& p: mineArrangement) {
+                            mines[p]++;
+                        }
+                        for (Point& p: borderingUncleared) {
+                            if (board.visibleBoard[p.y][p.x] != Board::FLAG_VALUE) {
+                                clear[p]++;
+                            }
+                            
+                        }
+                    } else {
+                        // If the case is invalid, reduce the num valid
+                        numValidArrangements--;
+                    }
+
+                    board.visibleBoard = updatedBoard;
+                }
+                // Inputs any guaranteed safe/mine tiles into solution
+                for (const auto & [point, count] : clear) {
+                    //std::cout << "clear y: " << point.y << " x: " << point.x << " count: " << count << "\n";
+                    if (count == numValidArrangements 
+                                && std::find(solution.clear.begin(), solution.clear.end(), point) == solution.clear.end()) {
+                        solution.clear.push_back(point);
+                        updatedBoard[point.y][point.x] = Board::CLEARED_VALUE;
+                        changeMade = true;
+                    }
+                }
+                for (const auto & [point, count] : mines) {
+                    //std::cout << "mines y: " << point.y << " x: " << point.x << " count: " << count << "\n";
+                    if (count == numValidArrangements
+                                && std::find(solution.mines.begin(), solution.mines.end(), point) == solution.mines.end()) {
+                        solution.mines.push_back(point);
+                        updatedBoard[point.y][point.x] = Board::FLAG_VALUE;
+                        changeMade = true;
+                    }
+                } 
+
+                //std::cout << "total " << cases.size() << " valid " << numValidArrangements;
+            }
+        }
+    } 
+
+    board.visibleBoard = originalBoard;
     return solution;
 }
 
@@ -297,8 +391,44 @@ std::vector<Solver::Point> Solver::getAllBorderNumbers() {
     return borderNumbers;
 }
 
+void Solver::get2x2BorderNumbers(int y_coord, int x_coord, std::vector<Point>& nums) {
+    nums.clear();
+    if (isBorderNumber(y_coord, x_coord)) {
+        nums.push_back({y_coord, x_coord});
+    }
+
+    bool yNotBorder = y_coord < Board::Y_DIMENSION - 1;
+    bool xNotBorder = x_coord < Board::X_DIMENSION - 1;
+
+    if (yNotBorder && isBorderNumber(y_coord + 1, x_coord)) {
+         nums.push_back({y_coord + 1, x_coord});
+    }
+    if (xNotBorder && isBorderNumber(y_coord, x_coord + 1)) {
+         nums.push_back({y_coord, x_coord + 1});
+    }
+    if (yNotBorder && xNotBorder && isBorderNumber(y_coord + 1, x_coord + 1)) {
+        nums.push_back({y_coord + 1, x_coord + 1});
+    }
+}
+
+void Solver::getBorderingUnclearedForList(std::vector<Point> numberList, std::vector<Point>& tiles) {
+    tiles.clear();
+    std::unordered_set<Point, PointHash> added;
+    for (Point& num: numberList) {
+        for (Point& p: getSurroundingUncleared(num.y, num.x, board)) {
+            if (added.find(p) == added.end()) {
+                tiles.push_back(p);
+                added.insert(p);
+            }
+        }
+    }
+}
+
 std::vector<std::vector<int>> Solver::generateCombinations(int numMines, int numUncleared) {
     std::vector<std::vector<int>> allCombinations;
+    if (numMines < 0) {
+        return allCombinations;
+    }
     std::vector<int> combination(numUncleared, 0);
 
     if (numMines >= numUncleared) {
@@ -314,6 +444,8 @@ std::vector<std::vector<int>> Solver::generateCombinations(int numMines, int num
     return allCombinations;
 }
 
+
+
 std::vector<std::vector<int>> Solver::generateAllCombinations(int totalMines, int numUncleared) {
     std::vector<std::vector<int>> allCombinations;
     int numMines = totalMines > numUncleared ? numUncleared : totalMines;
@@ -324,6 +456,51 @@ std::vector<std::vector<int>> Solver::generateAllCombinations(int totalMines, in
     }
 
     return allCombinations;
+}
+
+ void Solver::findCasesDFS(std::vector<Point> tiles, int index, std::vector<Point> mines, 
+                                    std::vector<std::vector<Point>>& cases, Board testBoard) {
+
+    // Base case: exits when all tiles have been looked at
+    if (index >= tiles.size()) {
+        cases.push_back(mines);
+        return;
+    }
+    int y = tiles[index].y;
+    int x = tiles[index].x;
+    std::vector<Point> surroundingUncleared = getSurroundingUncleared(y, x, testBoard);
+    int minesLeft = testBoard.visibleBoard[y][x] - testBoard.countMines(y, x);
+    if (minesLeft < 0 || minesLeft > surroundingUncleared.size()) {
+        return; 
+    }
+    // Skips this level if there are no uncleared tiles
+    if (surroundingUncleared.size() == 0) {
+        findCasesDFS(tiles, index+1, mines, cases, testBoard);
+        return;
+    }
+    std::vector<std::vector<int>> combinations = generateCombinations(minesLeft, surroundingUncleared.size());
+    // Recursive call for each unique combionation of mines
+    for (std::vector<int>& arrangement : combinations) {
+        // Previous states for backtracking
+        std::vector<Point> previousMines = mines;
+        std::vector<std::vector<int>> previousBoard = testBoard.visibleBoard;
+
+        for (int i=0; i<arrangement.size(); i++) {
+            int currentY = surroundingUncleared[i].y;
+            int currentX = surroundingUncleared[i].x;
+            if (arrangement[i] == 1) {
+                testBoard.visibleBoard[currentY][currentX] = Board::FLAG_VALUE;
+                mines.push_back({currentY, currentX});
+            } else {
+                testBoard.visibleBoard[currentY][currentX] =  Board::CLEARED_VALUE;
+            }
+        }
+        findCasesDFS(tiles, index+1, mines, cases, testBoard);
+
+        // Restores previous states
+        testBoard.visibleBoard = previousBoard;
+        mines = previousMines;
+    }
 }
 
 bool Solver::isTileValid(int y_coord, int x_coord, std::vector<std::vector<int>> testCase) {
@@ -343,40 +520,56 @@ bool Solver::isTileValid(int y_coord, int x_coord, std::vector<std::vector<int>>
 
 bool Solver::testCombination(Board testBoard, std::unordered_map<Point, int, PointHash>& clearMap, 
                                 std::unordered_map<Point, int, PointHash>& minesMap) {
-    std::vector<Point> clear, mines;
-    std::vector<Point> borderNumbers = getAllBorderNumbers();
-    bool changeMade;
-    do {
-        changeMade = false;
-        for (Point currentPoint : borderNumbers) {
-            int y = currentPoint.y; int x = currentPoint.x;
-            int currentNumber = testBoard.visibleBoard[y][x];
-            bool isInvalid = currentNumber > testBoard.countUncleared(y, x) + testBoard.countMines(y, x)
-                                    || currentNumber < testBoard.countMines(y, x);
-            if (isInvalid) return false;
 
-            bool needsFlag = testBoard.countUncleared(y, x) 
-                                    && currentNumber == testBoard.countUncleared(y, x) + testBoard.countMines(y, x);
-            bool needsClearing = currentNumber == testBoard.countMines(y, x) && testBoard.countUncleared(y, x) > 0;
-            if (needsFlag) {
-                changeMade = true;
-                for (Point unclearedPoint : getSurroundingUncleared(y, x, testBoard)) {
-                    testBoard.visibleBoard[unclearedPoint.y][unclearedPoint.x] = Board::FLAG_VALUE;
-                    if (std::find(mines.begin(), mines.end(), unclearedPoint) == mines.end()) {
-                        mines.push_back(unclearedPoint);
+    std::vector<Point> clear, mines;
+    bool changeMade = true;
+    while (changeMade) {
+        changeMade = false;
+        for (int y=0; y<Board::Y_DIMENSION; y++) {
+            for (int x=0; x<Board::X_DIMENSION; x++) {
+                //if (!isBorderNumber(y, x)) continue;
+
+                int currentNumber = testBoard.visibleBoard[y][x];
+                if (currentNumber <= 0) continue; 
+                bool isInvalid = currentNumber > testBoard.countUncleared(y, x) + testBoard.countMines(y, x)
+                                        || currentNumber < testBoard.countMines(y, x);
+                if (isInvalid) {
+                    // std::cout << "Invalid case at y: " << y << " x: " << x << std::endl;
+                    // for (int i=0; i<Board::Y_DIMENSION; i++) {
+                    //     for (int j=0; j<Board::X_DIMENSION; j++) {
+                    //         if (testBoard.visibleBoard[i][j] >= 0 )
+                    //             std::cout << " " << testBoard.visibleBoard[i][j] << "\t";
+                    //         else 
+                    //             std::cout << testBoard.visibleBoard[i][j] << "\t";
+                    //     }
+                    //     std::cout << std::endl;
+                    // }
+                    // std::cout << std::endl;
+                    return false;  
+                }     
+                bool needsFlag = testBoard.countUncleared(y, x) > 0
+                                        && currentNumber == testBoard.countUncleared(y, x) + testBoard.countMines(y, x);
+                bool needsClearing = currentNumber == testBoard.countMines(y, x) && testBoard.countUncleared(y, x) > 0;
+                if (needsFlag) {
+                    changeMade = true;
+                    for (Point unclearedPoint : getSurroundingUncleared(y, x, testBoard)) {
+                        testBoard.visibleBoard[unclearedPoint.y][unclearedPoint.x] = Board::FLAG_VALUE;
+                        if (std::find(mines.begin(), mines.end(), unclearedPoint) == mines.end()) {
+                            mines.push_back(unclearedPoint);
+                        }
                     }
-                }
-            } else if (needsClearing) {
-                changeMade = true;
-                for (Point unclearedPoint : getSurroundingUncleared(y, x, testBoard)) {
-                    testBoard.visibleBoard[unclearedPoint.y][unclearedPoint.x] = Board::CLEARED_VALUE;
-                    if (std::find(clear.begin(), clear.end(), unclearedPoint) == clear.end()) {
-                        clear.push_back(unclearedPoint);
+                } else if (needsClearing) {
+                    changeMade = true;
+                    for (Point unclearedPoint : getSurroundingUncleared(y, x, testBoard)) {
+                        testBoard.visibleBoard[unclearedPoint.y][unclearedPoint.x] = Board::CLEARED_VALUE;
+                        if (std::find(clear.begin(), clear.end(), unclearedPoint) == clear.end()) {
+                            clear.push_back(unclearedPoint);
+                        }
                     }
                 }
             }
         }
-    } while (changeMade);
+    } 
 
     for (Point p: clear) {
         clearMap[p]++;
@@ -384,6 +577,18 @@ bool Solver::testCombination(Board testBoard, std::unordered_map<Point, int, Poi
     for (Point p: mines) {
         minesMap[p]++;
     }
+    
+    // std::cout << "Valid Case" << std::endl;
+    // for (int i=0; i<Board::Y_DIMENSION; i++) {
+    //     for (int j=0; j<Board::X_DIMENSION; j++) {
+    //         if (testBoard.visibleBoard[i][j] >= 0 )
+    //             std::cout << " " << testBoard.visibleBoard[i][j] << "\t";
+    //         else 
+    //             std::cout << testBoard.visibleBoard[i][j] << "\t";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // std::cout << std::endl;
 
     return true;
 }

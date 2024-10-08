@@ -20,7 +20,7 @@ int main() {
     
             while (!s.board.gameOver) {
                 s.clearTrivial();
-                Solver::Solution solve = s.testCasesByTile();
+                Solver::Solution solve = s.test2x2Tiles();
                 if (solve.clear.size() == 0 && solve.mines.size() == 0) {
                     s.guaranteedClick();
                 } else {

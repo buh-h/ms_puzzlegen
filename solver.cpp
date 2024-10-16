@@ -212,7 +212,7 @@ Solver::Solution Solver::testCasesByTile() {
     return solution;
 }
 
-Solver::Solution Solver::test2x2Tiles() {
+Solver::Solution Solver::testNxNTiles(int n) {
     Solution solution;
     if (board.gameOver) return solution;
     std::vector<std::vector<int>> originalBoard = board.visibleBoard;
@@ -223,23 +223,23 @@ Solver::Solution Solver::test2x2Tiles() {
         for (int i=0; i<Board::Y_DIMENSION; i++) {
             for (int j=0; j<Board::X_DIMENSION; j++) {
 
-                std::vector<Point> nums2x2;
-                get2x2BorderNumbers(i, j, nums2x2);
+                std::vector<Point> numsNxN;
+                getNxNBorderNumbers(i, j, numsNxN, n);
 
                 // Skips tile if there are no border numbers around it
-                if (nums2x2.size() == 0) continue;
+                if (numsNxN.size() == 0) continue;
 
                 //std::cout << "Looking at y: " << i << " x: " << j << "\n"; 
                 std::unordered_map<Point, int, PointHash> clear, mines;
                 std::vector<std::vector<Point>> cases;
-                findCasesDFS(nums2x2, 0, std::vector<Point>(), cases, board);
+                findCasesDFS(numsNxN, 0, std::vector<Point>(), cases, board);
                 int numValidArrangements = cases.size();
                 //FOR DEBUGGING
                 int n = 0;
                 for (std::vector<Point>& mineArrangement: cases) {
                     n++;
                     std::vector<Point> borderingUncleared;
-                    getBorderingUnclearedForList(nums2x2, borderingUncleared);
+                    getBorderingUnclearedForList(numsNxN, borderingUncleared);
                     // Inputs the mine arrangement
                     for (Point& p: mineArrangement) {
                         board.visibleBoard[p.y][p.x] = Board::FLAG_VALUE;
@@ -391,23 +391,15 @@ std::vector<Solver::Point> Solver::getAllBorderNumbers() {
     return borderNumbers;
 }
 
-void Solver::get2x2BorderNumbers(int y_coord, int x_coord, std::vector<Point>& nums) {
+void Solver::getNxNBorderNumbers(int y_coord, int x_coord, std::vector<Point>& nums, int n) {
     nums.clear();
-    if (isBorderNumber(y_coord, x_coord)) {
-        nums.push_back({y_coord, x_coord});
-    }
-
-    bool yNotBorder = y_coord < Board::Y_DIMENSION - 1;
-    bool xNotBorder = x_coord < Board::X_DIMENSION - 1;
-
-    if (yNotBorder && isBorderNumber(y_coord + 1, x_coord)) {
-         nums.push_back({y_coord + 1, x_coord});
-    }
-    if (xNotBorder && isBorderNumber(y_coord, x_coord + 1)) {
-         nums.push_back({y_coord, x_coord + 1});
-    }
-    if (yNotBorder && xNotBorder && isBorderNumber(y_coord + 1, x_coord + 1)) {
-        nums.push_back({y_coord + 1, x_coord + 1});
+    for (int i=y_coord; i<y_coord+n; i++) {
+        if (i >= Board::Y_DIMENSION) break;
+        for (int j=x_coord; j<x_coord+n; j++) {
+            if (j >= Board::X_DIMENSION) break;
+            if (isBorderNumber(i, j)) 
+                nums.push_back(Point(i, j));
+        }
     }
 }
 

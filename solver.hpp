@@ -27,7 +27,7 @@ class Solver {
     void guaranteedClick();
     Solution testMinecountCases();
     Solution testCasesByTile();
-    Solution test2x2Tiles();
+    Solution testNxNTiles(int n);
     void makeMove(Solution moves);
     void printBoard();
     // std::vector<std::vector<int>> generateCombinations(int numMines, int numUncleared);
@@ -39,7 +39,7 @@ class Solver {
     std::vector<Point> getSurroundingUncleared(int y_coord, int x_coord, Board testBoard);
     std::vector<Point> getAllBorderingUncleared();
     std::vector<Point> getAllBorderNumbers();
-    void get2x2BorderNumbers(int y_coord, int x_coord, std::vector<Point>& nums);
+    void getNxNBorderNumbers(int y_coord, int x_coord, std::vector<Point>& nums, int n);
     void getBorderingUnclearedForList(std::vector<Point> numberList, std::vector<Point>& tiles);
     std::vector<std::vector<int>> generateCombinations(int numMines, int numUncleared);
     std::vector<std::vector<int>> generateAllCombinations(int totalMines, int numUncleared);

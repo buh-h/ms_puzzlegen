@@ -1,55 +1,5 @@
 #include "solver.hpp"
 
-void testfuncs() {
-    Solver s(Board(12));    
-
-    std::vector<std::vector<int>> test = {
-        {-1,-1,-1,-1,-1,-1,-1,-1},
-        {1,1,1,-1,-1,-1,-1,-1},
-        {-0,-0,-1,-1,-1,-1,-1,-1},
-        {-1,-1,-1,-1,-1,-1,-1,-1},
-        {-1,-1,-1,-1,-1,-1,-1,-1},
-        {-1,-1,-1,-1,-1,-1,-1,-1},
-        {-1,-1,-1,-1,-1,-1,-1,-1},
-        {-1,-1,-1,-1,-1,-1,-1,-1}
-
-    };
-    s.board.visibleBoard = test;
-
-    Solver::Solution a = s.test2x2Tiles();
-    std::cout << "clear\n";
-    for (Solver::Point& p: a.clear) {
-        std::cout << "y: " << p.y << " x: " << p.x << "\n";
-    }
-    std::cout << "mines\n";
-    for (Solver::Point& p: a.mines) {
-        std::cout << "y: " << p.y << " x: " << p.x << "\n";
-    }
-    // std::vector<Solver::Point> nums;
-    // s.get2x2BorderNumbers(0, 1, nums);
-    // std::vector<Solver::Point> tiles;
-    // s.getBorderingUnclearedForList(nums, tiles);
-    // std::vector<std::vector<Solver::Point>> cases;
-    // s.findCasesDFS(nums, 0, std::vector<Solver::Point>(), cases, s.board);
-
-    // for (Solver::Point& p: tiles) {
-    //     std::cout << "y: " << p.y << " x: " << p.x << "\n";
-    // }
-    // std::cout << "Cases\n"; 
-    // int n = 1;
-    // for (std::vector<Solver::Point>& v: cases) {
-    //     std::cout << "case " << n << "\n";
-    //     for (Solver::Point& p: v) {
-    //         std::cout << "y: " << p.y << " x: " << p.x << "\n";
-    //     }
-    //     n++;
-    // }
-
-    //s.printBoard();
-
-}
-
-
 int main() {
 
     //testfuncs();
@@ -65,7 +15,7 @@ int main() {
         while (!s.board.gameOver) {
             s.clearTrivial();
             Solver::Solution solve = s.testCasesByTile();
-            Solver::Solution solve2 = s.test2x2Tiles();
+            Solver::Solution solve2 = s.testNxNTiles(3);
             if (solve.clear.size() == 0 && solve.mines.size() == 0) {
                 std::cout << "guessing" << std::endl;
                 s.guaranteedClick();

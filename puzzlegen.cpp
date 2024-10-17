@@ -28,20 +28,28 @@ int main() {
                     std::string boardString = "";
                     std::string clearPointsString = "";
                     std::string minePointsString = "";
-                    for (std::vector<int> row : s.board.visibleBoard) {
-                        for (int i : row) {
-                            boardString += std::to_string(i) + " ";
+                    for (int i=0; i<Board::Y_DIMENSION; i++) {
+                        for (int j=0; j<Board::X_DIMENSION; j++) {
+                            if (std::find(solve.clear.begin(), solve.clear.end(), Solver::Point(i,j)) != solve.clear.end()) {
+                                boardString += "O ";
+                            } 
+                            else if (std::find(solve.mines.begin(), solve.mines.end(), Solver::Point(i,j)) != solve.mines.end()) {
+                                boardString += "X ";
+                            } else {
+                                boardString += std::to_string(s.board.visibleBoard[i][j]) + " ";
+                            }
                         }
                     }
-                    for (Solver::Point clearPoint : solve.clear) {
-                        clearPointsString += "(" + std::to_string(clearPoint.y) 
-                                                    + "," + std::to_string(clearPoint.x) + ") ";
-                    }
-                    for (Solver::Point minePoint : solve.mines) {
-                        minePointsString += "(" + std::to_string(minePoint.y) 
-                                                    + "," + std::to_string(minePoint.x) + ") ";
-                    }
-                    out << boardString << "\n" << clearPointsString << "\n" << minePointsString << "\n";
+                    // for (Solver::Point clearPoint : solve.clear) {
+                    //     clearPointsString += "(" + std::to_string(clearPoint.y) 
+                    //                                 + "," + std::to_string(clearPoint.x) + ") ";
+                    // }
+                    // for (Solver::Point minePoint : solve.mines) {
+                    //     minePointsString += "(" + std::to_string(minePoint.y) 
+                    //                                 + "," + std::to_string(minePoint.x) + ") ";
+                    // }
+                    out << boardString << "\n";
+                    // out << boardString << "\n" << clearPointsString << "\n" << minePointsString << "\n";
                     s.makeMove(solve);
                     num++;
                 }
